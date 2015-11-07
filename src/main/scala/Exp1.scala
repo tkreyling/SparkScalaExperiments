@@ -38,8 +38,8 @@ object Exp1 {
     peopleWithKnowledge.collect.foreach(println);
   }
 
-  def leftOuterJoinList[K,V1,V2](leftItems: RDD[(K, V1)], rightItems: RDD[(K, V2)], copyConstructor: (V1, List[V2]) => V1)
-                                (implicit kt : ClassTag[K], v1t : ClassTag[V1], v2t : ClassTag[V2], ord : Ordering[K])
+  def leftOuterJoinList [K:ClassTag,V1:ClassTag,V2:ClassTag]
+  (leftItems: RDD[(K, V1)], rightItems: RDD[(K, V2)], copyConstructor: (V1, List[V2]) => V1)
   : RDD[(K, V1)] = {
     val groupedRightItems = rightItems.groupByKey.mapValues(_.toList)
 
