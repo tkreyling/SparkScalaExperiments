@@ -1,7 +1,8 @@
 import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
+import scala.reflect.ClassTag
+import scala.Ordering
 
 object Exp1 {
   case class Person(id : Int, firstname : String, lastname : String, knowledgeItems : List[KnowledgeItem])
@@ -38,7 +39,7 @@ object Exp1 {
   }
 
   def leftOuterJoinList[K,V1,V2](leftItems: RDD[(K, V1)], rightItems: RDD[(K, V2)], copyConstructor: (V1, List[V2]) => V1)
-                                (implicit kt : scala.reflect.ClassTag[K], v1t : scala.reflect.ClassTag[V1], v2t : scala.reflect.ClassTag[V2], ord : scala.Ordering[K])
+                                (implicit kt : ClassTag[K], v1t : ClassTag[V1], v2t : ClassTag[V2], ord : Ordering[K])
   : RDD[(K, V1)] = {
     val groupedRightItems = rightItems.groupByKey.mapValues(_.toList)
 
