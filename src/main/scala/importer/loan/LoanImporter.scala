@@ -3,17 +3,12 @@ package importer.loan
 import java.io.StringWriter
 import java.time.LocalDate
 
-import importer.loan.LoanModel
-import javax.xml.bind.{JAXB, JAXBContext, Marshaller}
-import javax.xml.bind.annotation.adapters.{XmlAdapter, XmlJavaTypeAdapter}
-import javax.xml.bind.annotation._
+import javax.xml.bind.{JAXBContext, Marshaller}
 
 import importer.loan.LoanModel.{Drawing, Loan, Money}
 import org.apache.spark.{SparkConf, SparkContext}
 
-import scala.annotation.meta.field
 import scala.collection.JavaConverters._
-import scala.tools.nsc.interpreter.JList
 
 object LoanImporter {
 
