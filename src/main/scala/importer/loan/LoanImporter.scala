@@ -86,7 +86,7 @@ object LoanImporter {
     )
       .saveAsTextFile("src/main/resources/importer/loan/out.xml")
 
-    Thread.sleep(1000000L)
+//    Thread.sleep(1000000L)
   }
 
   def parseLoan(line: String) : Loan = {
