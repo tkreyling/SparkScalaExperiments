@@ -16,81 +16,91 @@ object LoanImporter {
     if(System.getProperty("os.name").contains("Windows"))
       System.setProperty("hadoop.home.dir", "C:\\winutil\\")
 
-    val start = System.currentTimeMillis
-
-    val conf = new SparkConf().setAppName("Loan Importer").setMaster("local").set("spark.hadoop.validateOutputSpecs", "false")
+    val conf = new SparkConf()
+      .setAppName("Loan Importer")
+      .setMaster("local").set("spark.hadoop.validateOutputSpecs", "false")
 
     val sc = new SparkContext(conf)
 
-    val loansAndDrawings = sc.textFile("src/main/resources/importer/loan/BasicData.csv").map(
-      line => line.split(",")(1) match {
+    /*
+      read and group into (key, value) tuples based on loan or drawing id
+     */
+    val basicData = sc.textFile("src/main/resources/importer/loan/BasicData.csv")
+      .map(line => line.split(",")(1) match {
         case "loan" => parseLoan(line)
         case "drawing" => parseDrawing(line)
         case _ =>
-      }
-    ).keyBy {
-      case l: Loan => l.id
-      case d: Drawing => d.id
-      case _ => "None"
+      })
+      .keyBy {
+        case l: Loan => l.id
+        case d: Drawing => d.id
+        case _ => "None"
     }
 
-    val loansAndDrawingsWithCapitals = loansAndDrawings.join(
-      sc.textFile("src/main/resources/importer/loan/Capitals.csv")
-        .keyBy(line => line.split(",")(0)))
+    val capitals = sc.textFile("src/main/resources/importer/loan/Capitals.csv")
+      .keyBy(line => line.split(",")(0))
+
+    val counterpartyReferences = sc.textFile("src/main/resources/importer/loan/References.csv")
+      .filter(line => line.split(",")(2).equalsIgnoreCase("CP"))
+      .keyBy( line => line.split(",")(0))
+
+    val drawingReferences = sc.textFile("src/main/resources/importer/loan/References.csv")
+      .filter(line => line.split(",")(2).equalsIgnoreCase("D"))
+      .keyBy( line => line.split(",")(1))
+
+    /*
+      join basic data and capitals
+     */
+    val loansAndDrawings = basicData.join(capitals)
       .mapValues {
         case (l: Loan, s: String) => parseCapitals(l, s)
         case (d: Drawing, s: String) => parseCapitals(d, s)
         case _ =>
       }
 
-    val loans = loansAndDrawingsWithCapitals.filter( pair => pair._2 match {
+    /*
+      join loans and counterparties
+     */
+    var loans = loansAndDrawings.filter( pair => pair._2 match {
       case l : Loan => true
       case _ => false
     })
 
-    val drawings = loansAndDrawingsWithCapitals.filter( pair => pair._2 match {
-      case d : Drawing => true
-      case _ => false
-    })
-
-    val counterpartyReferences = sc.textFile("src/main/resources/importer/loan/References.csv")
-      .filter(line => line.split(",")(2).equalsIgnoreCase("CP"))
-      .keyBy( line => line.split(",")(0))
-
-    val loansWithCounterparties = loans.leftOuterJoin(counterpartyReferences).mapValues {
+    loans = loans.leftOuterJoin(counterpartyReferences).mapValues {
       case (a: Loan, b: Some[String]) => a.copy(counterparty = Some(b.get.split(",")(1)))
       case (a: Loan, _) => a
     }
 
-    val drawingsWithLoanKeys = sc.textFile("src/main/resources/importer/loan/References.csv")
-          .filter(line => line.split(",")(2).equalsIgnoreCase("D"))
-          .keyBy( line => line.split(",")(1))
-      .join(drawings)
+    /*
+      join drawings and drawing references and group by loan id to get a list of drawings per loan
+     */
+    val drawings = loansAndDrawings.filter( pair => pair._2 match {
+      case d : Drawing => true
+      case _ => false
+    })
+
+    val drawingsWithLoanKeys = drawingReferences.join(drawings)
           .values.map(pair => (pair._1.split(",")(0), pair._2))
           .groupByKey()
 
-    val loansWithDrawings = loansWithCounterparties.leftOuterJoin(drawingsWithLoanKeys)
+    /*
+      add the drawings to the loans
+     */
+    loans = loans.leftOuterJoin(drawingsWithLoanKeys)
       .mapValues {
         case (a: Loan, b: Option[Iterable[Drawing]]) => a.copy(drawings = b.getOrElse(List()).toList.asJava)
         case _ => throw new RuntimeException
       }
 
-    loansWithDrawings
+    loans.repartition(24)
       .map( v => {
         val out: StringWriter = new StringWriter()
-        val context = JAXBContext.newInstance(v._2.getClass)
-        val marshaller = context.createMarshaller()
-        marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true)
-
-        marshaller.marshal(v._2, out)
+        StaticJaxbContext.marshaller.marshal(v._2, out)
         out.toString
-      }
-    )
+      })
       .saveAsTextFile("src/main/resources/importer/loan/out.xml")
 
-    val end = System.currentTimeMillis
-    val runtime = (end - start) / 1000
-    println("Done in " + runtime + " seconds")
+    println("Done")
 
 //    Thread.sleep(1000000L)
   }
