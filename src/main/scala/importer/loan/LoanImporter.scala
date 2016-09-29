@@ -19,7 +19,7 @@ object LoanImporter {
   type xmlElementWrapper     = XmlElementWrapper @field
   type xmlTypeAdapter = XmlJavaTypeAdapter @field
 
-  class StringOptionAdapter extends OptionAdapter[String](null, "")
+  class StringOptionAdapter extends OptionAdapter[String]("", "")
   class OptionAdapter[A](nones: A*) extends XmlAdapter[A, Option[A]] {
     def marshal(v: Option[A]): A = v.getOrElse(nones(0))
     def unmarshal(v: A) = if (nones contains v) None else Some(v)
@@ -104,8 +104,9 @@ object LoanImporter {
       .filter(line => line.split(",")(2).equalsIgnoreCase("CP"))
       .keyBy( line => line.split(",")(0))
 
-    val loansWithCounterparties = loans.join(counterpartyReferences).mapValues {
-      case (a: Loan, b: String) => a.copy(counterparty = Some(b.split(",")(1)))
+    val loansWithCounterparties = loans.leftOuterJoin(counterpartyReferences).mapValues {
+      case (a: Loan, b: Some[String]) => a.copy(counterparty = Some(b.get.split(",")(1)))
+      case (a: Loan, _) => a
     }
 
     val drawingsWithLoanKeys = sc.textFile("src/main/resources/importer/loan/References.csv")
