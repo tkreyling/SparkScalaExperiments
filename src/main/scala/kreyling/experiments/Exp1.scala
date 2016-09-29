@@ -27,10 +27,10 @@ object Exp1 {
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local");
     val sc = new SparkContext(conf);
 
-    val people = sc.textFile("src/main/resources/persons.csv").map(PersonFactory.fromCSV).map(p => (p.id, p));
+    val people = sc.textFile("src/main/resources/kreyling/experiments/persons.csv").map(PersonFactory.fromCSV).map(p => (p.id, p));
     people.collect.foreach(println)
 
-    val knowledgeItems = sc.textFile("src/main/resources/knowledge.csv").map(KnowledgeItemFactory.fromCSV).map(k => (k.personId, k));
+    val knowledgeItems = sc.textFile("src/main/resources/kreyling/experiments/knowledge.csv").map(KnowledgeItemFactory.fromCSV).map(k => (k.personId, k));
     knowledgeItems.collect.foreach(println)
 
     val peopleWithKnowledge = leftOuterJoinList[Int,Person[None.type],Person[Some[List[KnowledgeItem]]],KnowledgeItem](people, knowledgeItems, (p,k) => p.copy(knowledgeItems = Some(k)))
