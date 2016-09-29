@@ -16,11 +16,7 @@ object LoanImporter {
     if(System.getProperty("os.name").contains("Windows"))
       System.setProperty("hadoop.home.dir", "C:\\winutil\\")
 
-    val conf = new SparkConf().
-              setAppName("Loan Importer").
-              setMaster("mesos://feuph-ambp:5050").
-              set("spark.executor.uri", "http://10.89.0.96:8888/spark-2.0.0-bin-hadoop2.7.tgz").
-              set("spark.mesos.executor.home", "")
+    val conf = new SparkConf().setAppName("Loan Importer").setMaster("local").set("spark.hadoop.validateOutputSpecs", "false")
 
     val sc = new SparkContext(conf)
 
