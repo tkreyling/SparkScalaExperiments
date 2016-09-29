@@ -1,8 +1,9 @@
-import org.apache.spark.SparkContext
-import org.apache.spark.SparkConf
+package kreyling.experiments
+
 import org.apache.spark.rdd.RDD
+import org.apache.spark.{SparkConf, SparkContext}
+
 import scala.reflect.ClassTag
-import scala.Ordering
 
 object Exp1 {
   case class Person[KI<:Option[List[KnowledgeItem]]](id : Int, firstname : String, lastname : String, knowledgeItems : KI)

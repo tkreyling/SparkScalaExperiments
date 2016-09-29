@@ -1,3 +1,5 @@
+package kreyling.experiments
+
 import org.scalatest.FunSuite
 
 class WurstTest extends FunSuite {

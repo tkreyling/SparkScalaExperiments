@@ -1,3 +1,5 @@
+package kreyling.experiments
+
 object OptionExp {
   case class Person[KI <: Option[List[String]]](name : String, knowledgeItems : KI)
 

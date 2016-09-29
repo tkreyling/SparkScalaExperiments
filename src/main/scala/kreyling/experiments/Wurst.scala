@@ -1,3 +1,5 @@
+package kreyling.experiments
+
 class Wurst {
   def sayWurst = {
 
