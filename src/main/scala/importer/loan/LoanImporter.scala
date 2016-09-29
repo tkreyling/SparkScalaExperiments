@@ -100,7 +100,10 @@ object LoanImporter {
     loans.repartition(24)
       .map( v => {
         val out: StringWriter = new StringWriter()
-        StaticJaxbContext.marshaller.marshal(v._2, out)
+//        StaticJaxbContext.marshaller.marshal(v._2, out)
+        val context = JAXBContext.newInstance(v._2.getClass)
+        val marshaller = context.createMarshaller()
+        marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true)
         out.toString
       })
       .saveAsTextFile(RESOURCE_PATH +
