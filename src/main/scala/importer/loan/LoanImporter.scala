@@ -18,14 +18,16 @@ object LoanImporter {
 
     val conf = new SparkConf()
       .setAppName("Loan Importer")
-      .setMaster("local").set("spark.hadoop.validateOutputSpecs", "false")
+      .set("spark.hadoop.validateOutputSpecs", "false")
 
     val sc = new SparkContext(conf)
 
+    val RESOURCE_PATH: String = "/Applications/mesos-1.0.1/share/"
     /*
-      read and group into (key, value) tuples based on loan or drawing id
-     */
-    val basicData = sc.textFile("src/main/resources/importer/loan/BasicData.csv")
+          read and group into (key, value) tuples based on loan or drawing id
+         */
+    val basicData = sc.textFile(RESOURCE_PATH +
+      "BasicData.csv")
       .map(line => line.split(",")(1) match {
         case "loan" => parseLoan(line)
         case "drawing" => parseDrawing(line)
@@ -37,14 +39,17 @@ object LoanImporter {
         case _ => "None"
     }
 
-    val capitals = sc.textFile("src/main/resources/importer/loan/Capitals.csv")
+    val capitals = sc.textFile(RESOURCE_PATH +
+      "Capitals.csv")
       .keyBy(line => line.split(",")(0))
 
-    val counterpartyReferences = sc.textFile("src/main/resources/importer/loan/References.csv")
+    val counterpartyReferences = sc.textFile(RESOURCE_PATH +
+      "References.csv")
       .filter(line => line.split(",")(2).equalsIgnoreCase("CP"))
       .keyBy( line => line.split(",")(0))
 
-    val drawingReferences = sc.textFile("src/main/resources/importer/loan/References.csv")
+    val drawingReferences = sc.textFile(RESOURCE_PATH +
+      "References.csv")
       .filter(line => line.split(",")(2).equalsIgnoreCase("D"))
       .keyBy( line => line.split(",")(1))
 
@@ -98,7 +103,8 @@ object LoanImporter {
         StaticJaxbContext.marshaller.marshal(v._2, out)
         out.toString
       })
-      .saveAsTextFile("src/main/resources/importer/loan/out.xml")
+      .saveAsTextFile(RESOURCE_PATH +
+        "out.xml")
 
     println("Done")
 
