@@ -25,6 +25,9 @@ object LoanImporter {
   val ZeroEuro = Money(0, "EUR")
 
   def main(args: Array[String]): Unit ={
+    if(System.getProperty("os.name").contains("Windows"))
+      System.setProperty("hadoop.home.dir", "C:\\winutil\\")
+
     val conf = new SparkConf().setAppName("Loan Importer").setMaster("local")
     val sc = new SparkContext(conf)
 
