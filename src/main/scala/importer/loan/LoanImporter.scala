@@ -16,6 +16,8 @@ object LoanImporter {
     if(System.getProperty("os.name").contains("Windows"))
       System.setProperty("hadoop.home.dir", "C:\\winutil\\")
 
+    val start = System.currentTimeMillis
+
     val conf = new SparkConf().setAppName("Loan Importer").setMaster("local").set("spark.hadoop.validateOutputSpecs", "false")
 
     val sc = new SparkContext(conf)
@@ -85,6 +87,10 @@ object LoanImporter {
       }
     )
       .saveAsTextFile("src/main/resources/importer/loan/out.xml")
+
+    val end = System.currentTimeMillis
+    val runtime = (end - start) / 1000
+    println("Done in " + runtime + " seconds")
 
 //    Thread.sleep(1000000L)
   }
