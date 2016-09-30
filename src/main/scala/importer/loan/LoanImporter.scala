@@ -19,6 +19,7 @@ object LoanImporter {
     val conf = new SparkConf()
       .setAppName("Loan Importer")
       .set("spark.hadoop.validateOutputSpecs", "false")
+      .set("spark.executor.uri", "http://10.89.0.139:8888/spark-2.0.0-bin-hadoop2.7.tgz")
 
     val sc = new SparkContext(conf)
 
